@@ -27,7 +27,7 @@
     
     
    (:action 
-    jump-right
+    jump-left
     :parameters (?omf - agent)
     :precondition (can_jump ?omf)
     :effect (forall (?x ?y ?xn - position)
@@ -59,7 +59,7 @@
     ) 
     
    (:action 
-    jump-down
+    jump-up
     :parameters (?omf - agent)
     :precondition (can_jump ?omf)
     :effect (forall (?x ?y ?yn - position)
