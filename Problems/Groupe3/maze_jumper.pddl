@@ -1,5 +1,5 @@
 (define (domain maze)
-  (:requirements :strips)
+  (:requirements :strips :typing)
   (:types agent position)
   (:predicates 
     (inc ?a ?b - position)
