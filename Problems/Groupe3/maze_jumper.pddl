@@ -13,13 +13,13 @@
     jump-right
     :parameters (?omf - agent)
     :precondition (can_jump ?omf)
-    :effect (forall (?x ?y ?yn - position)
+    :effect (forall (?x ?y ?xn - position)
                     (when 
                       (and (at ?omf ?x ?y)
                             (inc ?x ?xn)
-                           (wall ?x ?yn))
+                           (wall ?xn ?y))
                       (and (not (at ?omf ?x ?y))
-                           (at ?omf ?x ?yn)
+                           (at ?omf ?xn ?y)
                            (not(can_jump ?omf)))
                       )
                     )
@@ -27,16 +27,16 @@
     
     
    (:action 
-    jump-left
+    jump-right
     :parameters (?omf - agent)
     :precondition (can_jump ?omf)
-    :effect (forall (?x ?y ?yn - position)
+    :effect (forall (?x ?y ?xn - position)
                     (when 
                       (and (at ?omf ?x ?y)
                             (dec ?x ?xn)
-                           (wall ?x ?yn))
+                           (wall ?xn ?y))
                       (and (not (at ?omf ?x ?y))
-                           (at ?omf ?x ?yn)
+                           (at ?omf ?xn ?y)
                            (not(can_jump ?omf)))
                       )
                     )
@@ -59,13 +59,13 @@
     ) 
     
    (:action 
-    jump-up
+    jump-down
     :parameters (?omf - agent)
     :precondition (can_jump ?omf)
     :effect (forall (?x ?y ?yn - position)
                     (when 
                       (and (at ?omf ?x ?y)
-                           (dec ?y ?yn)
+                            (dec ?y ?yn)
                            (wall ?x ?yn))
                       (and (not (at ?omf ?x ?y))
                            (at ?omf ?x ?yn)
