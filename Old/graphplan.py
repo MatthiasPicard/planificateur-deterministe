@@ -10,7 +10,7 @@ from PlanGraph import PlanGraph
 from Parser import Parser
 from Action import Action
 from random import choice
-help(parser)
+
 
 class GraphPlan(object):
     '''
