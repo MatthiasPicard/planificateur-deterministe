@@ -36,9 +36,6 @@ class GraphPlan(object):
         self.independent() #creates independent actions list
         self.graphplan() #calls graphplan
 
-
-
-
     '''the graphplan algorithm. If it's easier for you to write your own code, go for it. But you may use this. The code calls the extract function which you should complete below '''
     def graphplan(self):
 

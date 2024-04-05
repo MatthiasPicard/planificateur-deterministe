@@ -1,9 +1,4 @@
 from pddl import parse_domain, parse_problem
-'''
-Created on Oct 20, 2013
-
-@author: Ofra
-'''
 from Pair import Pair
 import copy
 from PropositionLayer import PropositionLayer
