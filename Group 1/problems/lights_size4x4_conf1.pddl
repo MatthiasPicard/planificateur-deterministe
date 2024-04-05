@@ -1,0 +1,7 @@
+(define (problem lights_size4x4_conf1)
+    (:domain lights_out)
+    (:requirements :strips :typing)
+    (:objects l00 l01 l02 l03 l10 l11 l12 l13 l20 l21 l22 l23 l30 l31 l32 l33 - light)
+    (:init (adjacent l00 l01) (adjacent l00 l10) (adjacent l01 l00) (adjacent l01 l02) (adjacent l01 l11) (adjacent l02 l01) (adjacent l02 l03) (adjacent l02 l12) (adjacent l03 l02) (adjacent l03 l13) (adjacent l10 l00) (adjacent l10 l11) (adjacent l10 l20) (adjacent l11 l01) (adjacent l11 l10) (adjacent l11 l12) (adjacent l11 l21) (adjacent l12 l02) (adjacent l12 l11) (adjacent l12 l13) (adjacent l12 l22) (adjacent l13 l03) (adjacent l13 l12) (adjacent l13 l23) (adjacent l20 l10) (adjacent l20 l21) (adjacent l20 l30) (adjacent l21 l11) (adjacent l21 l20) (adjacent l21 l22) (adjacent l21 l31) (adjacent l22 l12) (adjacent l22 l21) (adjacent l22 l23) (adjacent l22 l32) (adjacent l23 l13) (adjacent l23 l22) (adjacent l23 l33) (adjacent l30 l20) (adjacent l30 l31) (adjacent l31 l21) (adjacent l31 l30) (adjacent l31 l32) (adjacent l32 l22) (adjacent l32 l31) (adjacent l32 l33) (adjacent l33 l23) (adjacent l33 l32) (not (on l00)) (not (on l01)) (not (on l02)) (not (on l12)) (not (on l13)) (not (on l21)) (not (on l23)) (not (on l33)) (on l03) (on l10) (on l11) (on l20) (on l22) (on l30) (on l31) (on l32))
+    (:goal (forall (?l1 - light) (not (on ?l1))))
+)

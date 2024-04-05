@@ -1,0 +1,9 @@
+(define (problem pb-20cities_50edges)
+    (:domain tps)
+    (:requirements :strips)
+    (:objects c0 c1 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 c2 c3 c4 c5 c6 c7 c8 c9)
+    (:init (connected c0 c1) (connected c0 c10) (connected c0 c12) (connected c0 c13) (connected c0 c16) (connected c0 c18) (connected c0 c3) (connected c0 c5) (connected c0 c8) (connected c1 c18) (connected c1 c2) (connected c1 c4) (connected c1 c7) (connected c11 c16) (connected c12 c15) (connected c12 c18) (connected c12 c19) (connected c13 c16) (connected c15 c18) (connected c15 c19) (connected c16 c19) (connected c17 c18) (connected c2 c19) (connected c2 c3) (connected c2 c4) (connected c2 c5) (connected c2 c7) (connected c2 c8) (connected c2 c9) (connected c4 c12) (connected c4 c18) (connected c4 c9) (connected c5 c10) (connected c5 c12) (connected c5 c13) (connected c5 c14) (connected c5 c6) 
+(connected c6 c11) (connected c6 c12) (connected c6 c18) (connected c6 c8) (connected c7 c17) (connected c7 c19) (connected c8 c10) (connected c8 c13) (connected c8 c14) (connected c8 c15) (connected c8 c9) (connected c9 c14) (connected c9 c18) (in c0) (not (delivered c0)) (not (in c1)) (not (in c10)) (not (in c11)) (not (in c12)) (not (in c13)) (not (in c14)) (not (in c15)) (not (in c16)) (not (in c17)) (not (in c18)) (not (in c19)) (not (in c2)) (not (in c3)) (not (in c4)) (not (in c5)) (not (in c6)) (not (in c7)) (not (in 
+c8)) (not (in c9)))
+    (:goal [Predicate(delivered, c0), Predicate(delivered, c1), Predicate(delivered, c2), Predicate(delivered, c3), Predicate(delivered, c4), Predicate(delivered, c5), Predicate(delivered, c6), Predicate(delivered, c7), Predicate(delivered, c8), Predicate(delivered, c9), Predicate(delivered, c10), Predicate(delivered, c11), Predicate(delivered, c12), Predicate(delivered, c13), Predicate(delivered, c14), Predicate(delivered, c15), Predicate(delivered, c16), Predicate(delivered, c17), Predicate(delivered, c18), Predicate(delivered, c19)])
+)

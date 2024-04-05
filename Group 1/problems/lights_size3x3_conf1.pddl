@@ -1,0 +1,7 @@
+(define (problem lights_size3x3_conf1)
+    (:domain lights_out)
+    (:requirements :strips :typing)
+    (:objects l00 l01 l02 l10 l11 l12 l20 l21 l22 - light)
+    (:init (adjacent l00 l01) (adjacent l00 l10) (adjacent l01 l00) (adjacent l01 l02) (adjacent l01 l11) (adjacent l02 l01) (adjacent l02 l12) (adjacent l10 l00) (adjacent l10 l11) (adjacent l10 l20) (adjacent l11 l01) (adjacent l11 l10) (adjacent l11 l12) (adjacent l11 l21) (adjacent l12 l02) (adjacent l12 l11) (adjacent l12 l22) (adjacent l20 l10) (adjacent l20 l21) (adjacent l21 l11) (adjacent l21 l20) (adjacent l21 l22) (adjacent l22 l12) (adjacent l22 l21) (not (on l01)) (not (on l10)) (not (on l11)) (not (on l12)) (not (on l20)) (not (on l21)) (not (on l22)) (on l00) (on l02))
+    (:goal (forall (?l1 - light) (not (on ?l1))))
+)
