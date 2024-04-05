@@ -1,37 +1,41 @@
 from util import Pair
 import copy
+from proposition import Proposition
 from propositionLayer import PropositionLayer
 from planGraphLevel import PlanGraphLevel
-from action import Action
-from Parser import Parser
+from pddl import parse_domain, parse_problem
+
+domain = parse_domain(".\Problems\Groupe3\maze_jumper.pddl")
+problem = parse_problem('.\Problems\Groupe3\problems\maze_p0.pddl')
+
+class OurGraphPlan(object):
+    
+    def __init__(self, domain, problem):
+        self.actions = domain.actions
+        self.predicates = domain.predicates
+        self.goal = problem.goal
+        self.init = problem.init
+        self.objects = problem.objects
+
 
 class GraphPlan(object):
-    """
-    A class for initializing and running the graphplan algorithm
-    """
 
     def __init__(self,domain, problem):
-        """
-        Constructor
-        """
         self.independentActions = []
         self.noGoods = []
-        self.graph = []
-        p = Parser(domain, problem)
-        self.actions, self.propositions = p.parseActionsAndPropositions()   # list of all the actions and list of all the propositions
-        self.initialState, self.goal = p.pasreProblem()                                     # the initial state and the goal state are lists of propositions
+        self.graph = []   # list of all the actions and list of all the propositions
+        self.actions = domain.actions
+        self.predicates = domain.predicates
+        self.goal = problem.goal
+        self.init = problem.init
+        self.objects = problem.objects                               # the initial state and the goal state are lists of propositions
         self.createNoOps()                                                                                                  # creates noOps that are used to propagate existing propositions from one layer to the next
         self.independent()                                                                                                  # creates independent actions list and updates self.independentActions
         PlanGraphLevel.setIndependentActions(self.independentActions)
         PlanGraphLevel.setActions(self.actions)
-        PlanGraphLevel.setProps(self.propositions)
-
+        PlanGraphLevel.setProps(self.proposition)
 
     def graphPlan(self):
-        """
-        The graphplan algorithm.
-        The code calls the extract function which you should complete below
-        """
         #initialization
         initState = self.initialState
         level = 0
@@ -44,15 +48,13 @@ class GraphPlan(object):
         pgInit = PlanGraphLevel()
         pgInit.setPropositionLayer(propLayerInit)
         self.graph.append(pgInit)
-        
 
         """
         While the layer does not contain all of the propositions in the goal state,
         or some of these propositions are mutex in the layer we,
         and we have not reached the fixed point, continue expanding the graph
         """
-
-        while self.goalStateNotInPropLayer(self.graph[level].getPropositionLayer().getPropositions()) or \
+        while self.goalStateNotInPropLayer(self.graph[level].getPropositionLayer().getProposition()) or \
             self.goalStateHasMutex(self.graph[level].getPropositionLayer()):
             if self.isFixed(level):
                 return None #this means we stopped the while loop above because we reached a fixed point in the graph. nothing more to do, we failed!
@@ -79,13 +81,11 @@ class GraphPlan(object):
                 sizeNoGood = len(self.noGoods[level]) #we didn't fail yet! update size of no good
         return plan
 
-
     def extract(self, Graph, subGoals, level):
         """
         The backsearch part of graphplan that tries
         to extract a plan when all goal propositions exist in a graph plan level.
         """
-
         if level == 0:
             return []
         if subGoals in self.noGoods[level]:
@@ -128,14 +128,13 @@ class GraphPlan(object):
                 return newPlan
         return None
 
-
-    def goalStateNotInPropLayer(self, propositions):
+    def goalStateNotInPropLayer(self, proposition):
         """
         Helper function that receives a  list of propositions (propositions) and returns true
         if not all the goal propositions are in that list
         """
         for goal in self.goal:
-            if goal not in propositions:
+            if goal not in proposition:
                 return True
         return False
 
@@ -156,7 +155,7 @@ class GraphPlan(object):
         if level == 0:
             return False
 
-        if len(self.graph[level].getPropositionLayer().getPropositions()) == len(self.graph[level - 1].getPropositionLayer().getPropositions()) and \
+        if len(self.graph[level].getPropositionLayer().getProposition()) == len(self.graph[level - 1].getPropositionLayer().getProposition()) and \
           len(self.graph[level].getPropositionLayer().getMutexProps()) == len(self.graph[level - 1].getPropositionLayer().getMutexProps()):
             return True
         return False
@@ -165,7 +164,7 @@ class GraphPlan(object):
         """
         Creates the noOps that are used to propagate propositions from one layer to the next
         """
-        for prop in self.propositions:
+        for prop in self.proposition:
             name = prop.name
             precon = []
             add = []
@@ -187,7 +186,6 @@ class GraphPlan(object):
 
     def isIndependent(self, a1, a2):
         return Pair(a1,a2) in self.independentActions
-
 
     def noMutexActionInPlan(self, plan, act, actionLayer):
         """
@@ -241,8 +239,8 @@ if __name__ == '__main__':
     if len(sys.argv) != 1 and len(sys.argv) != 3:
         print("Usage: GraphPlan.py domainName problemName")
         exit()
-    domain = 'dwrDomain.txt'
-    problem = 'dwrProblem.txt'
+    domain = parse_domain(".\Problems\Groupe3\maze_jumper.pddl")
+    problem = parse_problem('.\Problems\Groupe3\problems\maze_p0.pddl')
     if len(sys.argv) == 3:
         domain = str(sys.argv[1])
         problem = str(sys.argv[2])
