@@ -33,7 +33,7 @@ class GraphPlan:
         self.action_layers = []
         self.prop_layers = [get_init_state(problem_file)] # always longer than actions_layers
         self.dp = pddlpy.DomainProblem(domain_file,problem_file)
-        self.prop_mutexes = [[]]   # list of list of pairs of mutex actions
+        self.prop_mutexes = [[]]   # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
         self.action_mutexes = [[]] # list of list of pairs of mutex actions
         
           
@@ -51,7 +51,7 @@ class GraphPlan:
                             ,len(self.prop_layers),len(self.action_layers) # layer_indexes
                             )
 
-    def forward(self,actions, state):# pour le backward faut garder une trace de quelles actions ont faites 
+    def forward(self,actions, state): # pour le backward faut garder une trace de quelles actions ont faites 
         next_action = set()
         effect_pos = set()
         effect_neg = set()
@@ -69,11 +69,61 @@ class GraphPlan:
         next_state.neg.update(effect_neg)
         return next_state, next_action
     
-    def create_mutexes(self,prop_layer,prop_action,layer_index,action_index):
-        for i in prop_layer.pos: # if i is in j.pos or j.neg, then i and j are mutexes
+    def create_mutexes(self,prop_layer,action_layer,prop_layer_index,action_layer_index):
+        
+        #1) if i is in j.pos or j.neg, then i and j are mutexes
+        for i in prop_layer.pos: 
             for j in prop_layer.neg:
                 if i == j:
-                    self.prop_mutexes[layer_index].append((i,j))
+                    self.prop_mutexes[prop_layer_index].append(((i,True),(j,False)))
+        for i in prop_layer.neg: 
+            for j in prop_layer.pos:
+                if i == j:
+                    self.prop_mutexes[prop_layer_index].append(((i,False),(j,True)))
+                    
+        #2) two literals are mutex if every pairs of action that can achieve these two literals are mutex
+        for 
+        
+        for prop1 in set.union(prop_layer.pos, prop_layer.neg):
+            for prop2 in set.union(prop_layer.pos, prop_layer.neg):
+                if prop1 != prop2:    
+                    accomplish_both_prop = []
+                    for action in action_layer:
+                        if (prop1 in action.effect_pos or prop1 in action.effect_neg) \
+                            and (prop2 in action.effect_pos or prop2 in action.effect_neg):
+                            accomplish_both_prop.append(action)
+                    mutex = True   
+                    for i in range(len(accomplish_both_prop)): # cartesian product?
+                        for j in range(i+1,len(accomplish_both_prop)):
+                            if not self.is_mutex_action(accomplish_both_prop[i], accomplish_both_prop[j], action_layer_index):
+                                mutex = False
+                                break
+                    if mutex:
+                        self.prop_mutexes[prop_layer_index].append((prop1,prop2))
+    
+        
+        for action1 in action_layer: # 3) two actions are mutex if they have inconsistent effects
+            for action2 in action_layer:
+                if action1 != action2:
+                    mutex = False
+                    for prop1 in set.union(action1.eff_pos, action1.eff_neg):
+                        for prop2 in set.union(action2.eff_pos, action2.eff_neg):
+                            if  self.is_mutex_prop(prop1, prop2,prop_layer_index):# we know that since we applied 1) first
+                                mutex = True
+                                break
+                    if mutex:
+                        self.action_mutexes[action_layer_index].append((action1,action2))
+                    else:  # 4) two actions are mutex if they interfere  
+                        for prop1 in action1.precondition_pos:
+                            for prop2 in action2.effect_neg:
+                                if prop1 == prop2:
+                                    self.action_mutexes[action_layer_index].append((action1,action2))
+                                else:
+                                    for prop1 in action1.precondition_neg:
+                                        for prop2 in action2.effect_pos:
+                                            if prop1 == prop2:
+                                                self.action_mutexes[action_layer_index].append((action1,action2))
+                                                       
 
     def plan(self):
         current_state = State(self.initial_state_pos, self.initial_state_neg)
@@ -104,14 +154,20 @@ class GraphPlan:
             #current_state = best_action.apply(current_state)
 
         return plan
-        
                   
+    def is_mutex_action(self,action1, action2,action_index):
+        set_actions = set([action1, action2])
+        return set_actions in [set(elem) for elem in self.action_mutexes[action_index]]
+    
+    def is_mutex_prop(self,prop1, prop2,prop_index):
+        set_props = set([prop1, prop2])
+        return set_props in [set(elem) for elem in self.prop_mutexes[prop_index]]
+
 def set_str(s: set):
     s_str = set()
     for i in s:
         s_str.add(str(i))
-    return s_str
-
+    return s_str    
 
 def is_applicable(action, state):
     a_pos = set_str(action.precondition_pos)
