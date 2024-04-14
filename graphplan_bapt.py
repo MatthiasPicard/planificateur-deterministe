@@ -8,25 +8,27 @@ import os
 
 def is_applicable(action, state):
     predicates = [elem.predicate for elem in state]
-    print(action.precondition_pos)
-    print(set.union(action.precondition_pos,action.precondition_neg))
-    return all(list(pre) in predicates for pre in set.union(action.precondition_pos,action.precondition_neg))
+    return all(list(pre) in predicates for pre in action.precondition_pos)
 
 def apply_action(action, state):
+    # new_state = state.copy()
+    # new_state.update(action.effect_pos)
+    # new_state.difference_update(action.effect_neg) # ne fait rien jsp pk
+    # return new_state
+
     new_state = state.copy()
-    new_state.update(action.effect_pos)
-    new_state.difference_update(action.effect_neg)
+    for effect in action.effect_pos:
+        new_state.add(effect)
+    for effect in action.effect_neg:
+        new_state.discard(effect)
     return new_state
 
-def total_state(actions, state):
-    liste_effet = []
-    liste_action = []
+def total_state(actions,state):
+    liste_actions = [] # une action peut être effectué sur des objets différents dans un état donné
     for action in actions:
         if is_applicable(action, state):
-            print('yey')
-            liste_effet.extend(apply_action(action, state))
-            liste_action.append(action)
-    return liste_effet, liste_action
+            liste_actions.append(apply_action(action, state))
+    return liste_actions
 
 def get_pairs(layer):
     # Generate all possible pairs of actions/literals in the level
