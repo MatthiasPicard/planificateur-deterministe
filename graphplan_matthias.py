@@ -89,15 +89,19 @@ class GraphPlan:
             if not applicable_actions:
                 print("No applicable actions to reach the goal state.")
                 return None
-
+            best_action=random.choice(applicable_actions)
+            print(best_action.name)
+            print(current_state_pos,current_state_neg)
+            current_state_pos,current_state_neg = best_action.apply(current_state_pos, current_state_neg)
+            print(current_state_pos,current_state_neg)
             # Sélection de l'action avec le plus grand nombre d'effets positifs partagés avec l'état but
-            best_action = max(applicable_actions, key=lambda x: len(set(x.eff_pos) & goal_state_set))
+            #best_action = max(applicable_actions, key=lambda x: len(set(x.eff_pos) & goal_state_set))
             plan.append(best_action)
-            print(best_action)
-            print(current_state.pos, current_state.neg)
+            #print(best_action)
+            #print(current_state.pos, current_state.neg)
 
             # Mise à jour de l'état courant après application de la meilleure action
-            current_state = best_action.apply(current_state)
+            #current_state = best_action.apply(current_state)
 
         return plan
         
