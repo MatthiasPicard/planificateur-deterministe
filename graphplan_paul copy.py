@@ -185,34 +185,62 @@ class GraphPlan:
             mutex
 
 
-    def plan(self):
-        current_state = State(self.initial_state_pos, self.initial_state_neg)
-        goal_state_set = self.goal_state 
+def plan(self):
+        # Vérifier si le but est atteint dans le dernier état
+        current_level = len(self.state_levels) - 1
+        current_state = self.state_levels[current_level]
+        if not (self.goal.pos <= current_state.pos and self.goal.neg <= current_state.neg):
+            # Si le but n'est pas atteint, générer le prochain niveau
+            self.create_next_layer()
+            return None  # Le plan n'est pas encore complet
+
+        # Initialiser le chemin de plan avec les états et actions
         plan = []
-        print(current_state.neg)
-        
-        while current_state.pos != goal_state_set:
-            applicable_actions = [
-                action for action in self.actions 
-                if action.is_applicable(current_state.pos, current_state.neg)
-            ]
-            if not applicable_actions:
-                print("No applicable actions to reach the goal state.")
+        state_path = [current_state]
+        action_path = []
+
+        # Tant que nous ne sommes pas revenus à l'état initial
+        while current_level > 0:
+            # Vérifier les mutex de littéraux dans l'état actuel
+            mutex_found = False
+            for lit1 in current_state.pos:
+                for lit2 in current_state.neg:
+                    if self.is_mutex_prop(lit1, lit2, current_level):
+                        mutex_found = True
+                        break
+                if mutex_found:
+                    break
+
+            if mutex_found:
+                # Si un mutex est trouvé, recréer la couche
+                self.create_next_layer()
+                return None  # Mutex trouvé, besoin de réviser
+
+            # Aucun mutex entre les littéraux, vérifier les actions
+            current_actions = self.action_set_levels[current_level]
+            no_mutex_actions = set()
+            for action in current_actions:
+                action_is_mutex = False
+                for other_action in current_actions:
+                    if action != other_action and self.is_mutex_action(action, other_action, current_level):
+                        action_is_mutex = True
+                        break
+                if not action_is_mutex:
+                    no_mutex_actions.add(action)
+
+            if not no_mutex_actions:
+                # Mutex trouvé parmi les actions, besoin de créer une nouvelle couche
+                self.create_next_layer()
                 return None
-            best_action=random.choice(applicable_actions)
-            print(best_action.name)
-            print(current_state_pos,current_state_neg)
-            current_state_pos,current_state_neg = best_action.apply(current_state_pos, current_state_neg)
-            print(current_state_pos,current_state_neg)
-            # Sélection de l'action avec le plus grand nombre d'effets positifs partagés avec l'état but
-            #best_action = max(applicable_actions, key=lambda x: len(set(x.eff_pos) & goal_state_set))
-            plan.append(best_action)
-            #print(best_action)
-            #print(current_state.pos, current_state.neg)
 
-            # Mise à jour de l'état courant après application de la meilleure action
-            #current_state = best_action.apply(current_state)
+            # Aucun mutex, enregistrer les actions et passer à l'état précédent
+            action_path.append(no_mutex_actions)
+            current_level -= 1
+            current_state = self.state_levels[current_level]
+            state_path.append(current_state)
 
+        # Retourner le plan à l'envers (puisque nous avons construit à partir du but)
+        plan = list(zip(reversed(state_path), reversed(action_path)))
         return plan
     
     def graphplan(self,domain_file, problem_file):

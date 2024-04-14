@@ -48,7 +48,7 @@ class GraphPlan:
         self.action_set_levels = []
         self.goal = goal
         self.literal_mutexes = [[]] # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
-        self.action_mutexes = [[]] # list of list of tuple of mutex actions
+        self.action_mutexes = [[]] # list of list of pairs of mutex actions
 
         '''
         Schéma pour les ensembles de mutex
@@ -58,10 +58,6 @@ class GraphPlan:
             [(l1, l2)], # pour le level 1
             [(l1, l3)], # pour le level 2
             [(l2, l3)]
-        ]
-
-        [
-            [(), (), ()]
         ]
 
         action_mutexes
@@ -116,12 +112,8 @@ class GraphPlan:
         self.create_mutexes()
     
     def mutex_action(self, action1, action2):
-        self.action_mutexes[-1].append((action1, action2))
+        self.action_mutexes[-1].append
 
-    def mutex_literal(self, literal1, literal2, literal1_truth, literal2_truth):
-        self.literal_mutexes[-1].append(((literal1, literal1_truth), (literal2, literal2_truth)))
-
-    '''
     def is_mutex_action(self,action1, action2,action_index):
         set_actions = set([action1, action2])
         return set_actions in [set(elem) for elem in self.action_mutexes[action_index]]
@@ -129,56 +121,6 @@ class GraphPlan:
     def is_mutex_prop(self,prop1, prop2,prop_index):
         set_props = set([prop1, prop2])
         return set_props in [set(elem) for elem in self.prop_mutexes[prop_index]]
-    '''
-    # Besoins concurrents : une précondition d’une action est mutex avec une précondition de l’autre
-
-    # on regarde les préconditions d'une action
-    # on regarde si elle est présente dans un mutex
-    # on regarde si le littéral associé est dans les préconditions de l'autre action
-
-    def is_mutex_actions(self, action1, action2):                    
-        for t in self.literal_mutexes[-2]:
-            if t[0][0] in action1.pre_pos and t[0][1] == True:
-                if t[1][0] in action2.pre_pos and t[1][1] == True:
-                    return True
-                if t[1][0] in action2.pre_neg and t[1][1] == False:
-                    return True
-            if t[0][0] in action1.pre_neg and t[0][1] == False:
-                if t[1][0] in action2.pre_pos and t[1][1] == True:
-                    return True
-                if t[1][0] in action2.pre_neg and t[1][1] == False:
-                    return True
-            if t[0][0] in action2.pre_pos and t[0][1] == True:
-                if t[1][0] in action1.pre_pos and t[1][1] == True:
-                    return True
-                if t[1][0] in action1.pre_neg and t[1][1] == False:
-                    return True
-            if t[0][0] in action2.pre_neg and t[0][1] == False:
-                if t[1][0] in action1.pre_pos and t[1][1] == True:
-                    return True
-                if t[1][0] in action1.pre_neg and t[1][1] == False:
-                    return True
-            if t[1][0] in action1.pre_pos and t[1][1] == True:
-                if t[0][0] in action2.pre_pos and t[1][1] == True:
-                    return True
-                if t[0][0] in action2.pre_neg and t[1][1] == False:
-                    return True
-            if t[1][0] in action1.pre_neg and t[1][1] == False:
-                if t[0][0] in action2.pre_pos and t[1][1] == True:
-                    return True
-                if t[0][0] in action2.pre_neg and t[1][1] == False:
-                    return True
-            if t[1][0] in action2.pre_pos and t[1][1] == True:
-                if t[0][0] in action1.pre_pos and t[1][1] == True:
-                    return True
-                if t[0][0] in action1.pre_neg and t[1][1] == False:
-                    return True
-            if t[1][0] in action2.pre_neg and t[1][1] == False:
-                if t[0][0] in action1.pre_pos and t[1][1] == True:
-                    return True
-                if t[0][0] in action1.pre_neg and t[1][1] == False:
-                    return True
-        return False
 
     def create_mutexes(self):
         action_set = self.action_set_levels[-1]
@@ -197,35 +139,35 @@ class GraphPlan:
             for action2 in action_set:
                 if action1 != action2:
                     if not action1.eff_pos.isdisjoint(action2.eff_neg):
-                        self.mutex_action(action1, action2)
+                        mutex
                     if not action2.eff_pos.isdisjoint(action1.eff_neg):
-                        self.mutex_action(action1, action2)
+                        mutex
 
             # Interférence : un effet d’une action est la négation d’une précondition de l’autre
         for action1 in action_set:
             for action2 in action_set:
                 if action1 != action2:
                     if not action1.eff_pos.isdisjoint(action2.pre_neg):
-                        self.mutex_action(action1, action2)
+                        mutex
                     if not action1.eff_neg.isdisjoint(action2.pre_pos):
-                        self.mutex_action(action1, action2)
+                        mutex
                     if not action2.eff_pos.isdisjoint(action1.pre_neg):
-                        self.mutex_action(action1, action2)
+                        mutex
                     if not action2.eff_neg.isdisjoint(action1.pre_pos):
-                        self.mutex_action(action1, action2)
+                        mutex
 
             # Besoins concurrents : une précondition d’une action est mutex avec une précondition de l’autre
         for action1 in action_set:
             for action2 in action_set:
                 if action1 != action2:
-                    if self.is_mutex_actions(action1.pre_pos, action2.pre_pos):
-                        self.mutex_action(action1, action2)
-                    if self.is_mutex_actions(action1.pre_pos, action2.pre_neg):
-                        self.mutex_action(action1, action2)
-                    if self.is_mutex_actions(action1.pre_neg, action2.pre_pos):
-                        self.mutex_action(action1, action2)
-                    if self.is_mutex_actions(action1.pre_neg, action2.pre_neg):
-                        self.mutex_action(action1, action2)
+                    if is_mutex(action1.pre_pos, action2.pre_pos):
+                        mutex
+                    if is_mutex(action1.pre_pos, action2.pre_neg):
+                        mutex
+                    if is_mutex(action1.pre_neg, action2.pre_pos):
+                        mutex
+                    if is_mutex(action1.pre_neg, action2.pre_neg):
+                        mutex
 
         # Mutex littéraux
             # l’un est la négation de l’autre
@@ -234,16 +176,15 @@ class GraphPlan:
         # Mutex littéraux
             # l’un est la négation de l’autre
         for literal in state.pos & state.neg: # le littéral est dans le pos et le neg # attention crée un set donc le for n'est pas possible
-            self.mutex_literal(literal, literal, True, False)
+            mutex
 
             # toute paire possible d’actions pouvant accomplir ces 2 littéraux est mutex -> se sert des actions précédentes
         for literal in state.pos and state.neg:
             get_action_giving(literal)
 
         if is_mutex(get_action_giving(literal1), get_action_giving(literal2)):
-            self.mutex_literal(literal, literal)
-
-def plan(self):
+            mutex
+    def plan(self):
         # Vérifier si le but est atteint dans le dernier état
         current_level = len(self.state_levels) - 1
         current_state = self.state_levels[current_level]
@@ -300,6 +241,7 @@ def plan(self):
         # Retourner le plan à l'envers (puisque nous avons construit à partir du but)
         plan = list(zip(reversed(state_path), reversed(action_path)))
         return plan
+
     def graphplan(self,domain_file, problem_file):
         """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
         
