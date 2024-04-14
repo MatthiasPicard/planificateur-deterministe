@@ -74,6 +74,36 @@ class GraphPlan:
             for j in prop_layer.neg:
                 if i == j:
                     self.prop_mutexes[layer_index].append((i,j))
+
+    def plan(self):
+        current_state = State(self.initial_state_pos, self.initial_state_neg)
+        goal_state_set = self.goal_state 
+        plan = []
+        print(current_state.neg)
+        
+        while current_state.pos != goal_state_set:
+            applicable_actions = [
+                action for action in self.actions 
+                if action.is_applicable(current_state.pos, current_state.neg)
+            ]
+            if not applicable_actions:
+                print("No applicable actions to reach the goal state.")
+                return None
+            best_action=random.choice(applicable_actions)
+            print(best_action.name)
+            print(current_state_pos,current_state_neg)
+            current_state_pos,current_state_neg = best_action.apply(current_state_pos, current_state_neg)
+            print(current_state_pos,current_state_neg)
+            # Sélection de l'action avec le plus grand nombre d'effets positifs partagés avec l'état but
+            #best_action = max(applicable_actions, key=lambda x: len(set(x.eff_pos) & goal_state_set))
+            plan.append(best_action)
+            #print(best_action)
+            #print(current_state.pos, current_state.neg)
+
+            # Mise à jour de l'état courant après application de la meilleure action
+            #current_state = best_action.apply(current_state)
+
+        return plan
         
                   
 def set_str(s: set):
