@@ -139,6 +139,7 @@ def graphplan(domain_file, problem_file):
 
 
 if __name__ == "__main__":
+    
     domain = ".\Problems\Groupe3\maze.pddl"
     problem = '.\Problems\Groupe3\problems\maze_p0.pddl'
     graphplan(domain_file, problem_file)
