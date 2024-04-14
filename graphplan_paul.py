@@ -111,7 +111,7 @@ class GraphPlan:
         self.state_levels.append(next_state)
         self.create_mutexes()
     
-    def mutex_action(action1, action2):
+    def mutex_action(self, action1, action2):
         self.action_mutexes[-1].append
 
 
