@@ -3,7 +3,7 @@ Created on Oct 20, 2013
 
 @author: Ofra
 '''
-from Pair import Pair
+from Old.Pair import Pair
 import copy
 from PropositionLayer import PropositionLayer
 from PlanGraph import PlanGraph

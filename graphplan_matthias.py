@@ -158,13 +158,18 @@ class GraphPlan:
     def graphplan(self,domain_file, problem_file):
         """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
         
-        while True: # condition d'arrêt à implémenter
+        stabilized = False
+        while not stabilized:
 
             solution = self.plan(level, goal, actions, mutexes)
             if solution is not None:
                 return solution
             
             self.create_next_layer()
+            if self.prop_layers[-1] == self.prop_layers[-2]:
+                stabilized = True
+                
+        return None
                   
     def is_mutex_action(self,action1, action2,action_index):
         set_actions = set([action1, action2])

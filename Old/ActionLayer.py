@@ -3,7 +3,7 @@ Created on Oct 19, 2013
 
 @author: Ofra
 '''
-from Pair import Pair
+from Old.Pair import Pair
 
 class ActionLayer(object):
     '''

@@ -5,7 +5,7 @@ Created on Oct 20, 2013
 '''
 from Action import Action
 from ActionLayer import ActionLayer
-from Pair import Pair
+from Old.Pair import Pair
 from Proposition import Proposition
 from PropositionLayer import PropositionLayer
 from itertools import combinations

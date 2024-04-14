@@ -1,5 +1,7 @@
 import pddlpy
 import pddl
+import random
+
 
 # Termes utilisés (en se basant sur le cours)
 # Literal (proposition)
@@ -42,12 +44,14 @@ class Action:
 class GraphPlan:
     
     def __init__(self,domain_file, problem_file):
+        init, goal = self.get_init(problem_file)
+        self.goal = goal
+        self.action_layers = []
+        self.prop_layers = [init] # always longer than actions_layers
         self.dp = pddlpy.DomainProblem(domain_file,problem_file)
-        self.state_levels = [get_init_state(problem_file)] # always longer than actions_levels
-        self.action_set_levels = []
-        self.literal_mutexes = [[]] # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
+        self.prop_mutexes = [[]]   # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
         self.action_mutexes = [[]] # list of list of pairs of mutex actions
-
+        """
         [
             [(l1, l2)], # pour le level 1
             [(l1, l3)], # pour le level 2
@@ -58,7 +62,8 @@ class GraphPlan:
             [(a1, a3)],
             [(a4, a5), (a3, a5)]
         ]
-              
+        """   
+                   
     def create_next_layer(self):
         next_state = State(set(), set())
         next_action_set = set()
@@ -190,6 +195,54 @@ class GraphPlan:
     def is_mutex_prop(self,prop1, prop2,prop_index):
         set_props = set([prop1, prop2])
         return set_props in [set(elem) for elem in self.prop_mutexes[prop_index]]
+    
+    def graphplan(self,domain_file, problem_file):
+        """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
+        
+        stabilized = False
+        while not stabilized:
+
+            solution = self.plan(level, goal, actions, mutexes)
+            if solution is not None:
+                return solution
+            
+            self.create_next_layer()
+            if self.prop_layers[-1] == self.prop_layers[-2]:
+                stabilized = True
+                
+        return None
+    
+    def get_init(self,problem_file):
+        
+        init_neg_predicates = []
+        init_pos_predicates = []
+        problem = pddl.parse_problem(problem_file) # we need to use pddl to extract negations
+        for predicate in list(problem.init):
+            if isinstance(predicate, pddl.logic.base.Not):
+                init_neg_predicates.append(tuple([str(predicate.argument.name)] + [str(c.name) for c in predicate.argument.terms]))
+            elif isinstance(predicate, pddl.logic.predicates.Predicate) :
+                init_pos_predicates.append(tuple([str(predicate.name)] + [str(c.name) for c in predicate.terms]))
+            else:
+                raise ValueError("Unknown predicate type")
+        
+        goal_neg_predicates = []
+        goal_pos_predicates = [] 
+        
+        if isinstance(problem.goal,pddl.logic.predicates.Predicate):
+            goal_pos_predicates.append(tuple([str(problem.goal.name)] + [str(c.name) for c in problem.goal.terms]))
+        elif isinstance(problem.goal, pddl.logic.base.Not) :
+            goal_neg_predicates.append(tuple([str(problem.goal.argument.name)] + [str(c.name) for c in predicate.argument.terms]))
+
+        else:  
+            for predicate in list(problem.goal.operands):
+                if isinstance(predicate, pddl.logic.base.Not):
+                    goal_neg_predicates.append(tuple([str(predicate.argument.name)] + [str(c.name) for c in predicate.argument.terms]))
+                elif isinstance(predicate, pddl.logic.predicates.Predicate) :
+                    goal_pos_predicates.append(tuple([str(predicate.name)] + [str(c.name) for c in predicate.terms]))
+                else:
+                    raise ValueError("Unknown predicate type")
+
+        return State(set_str(init_pos_predicates), set_str(init_neg_predicates)),State(set_str(goal_pos_predicates), set_str(goal_neg_predicates))
 
 def set_str(s: set):
     s_str = set()
@@ -211,49 +264,16 @@ def is_applicable(action, state):
         else:
             return False
         
-def get_init_state(problem_file):
-    neg_predicates = []
-    pos_predicates = []
-    problem = pddl.parse_problem(problem_file) # we need to use pddl to extract negations
-    for predicate in list(problem.init):
-        if isinstance(predicate, pddl.logic.base.Not):
-            neg_predicates.append(tuple([str(predicate.argument.name)] + [str(c.name) for c in predicate.argument.terms]))
-        elif isinstance(predicate, pddl.logic.predicates.Predicate) :
-            pos_predicates.append(tuple([str(predicate.name)] + [str(c.name) for c in predicate.terms]))
-        else:
-            raise ValueError("Unknown predicate type")
-
-    return State(set_str(pos_predicates), set_str(neg_predicates)) 
-
-
-def graphplan(domain_file, problem_file):
-    """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
-    
-    domprob = get_init_state(domain_file, problem_file)
-
-    init = domprob.initialstate()
-    goal = domprob.goals()
-    actions = domprob.operators()
-
-    # Initialize the level to 0
-    level = {0: init}
-
-    # Initialize a dictionary to store the mutex relations
-    mutexes = defaultdict(set)
-
-    # Graphplan algorithm
-    while True:
-        # Try to find a solution
-        solution = search_for_solution(level, goal, actions, mutexes)
-        if solution is not None:
-            return solution
-
-        # Expand the graph by adding a new level
-        level = expand_graph(level, actions, mutexes)
-
 
 if __name__ == "__main__":
     
-    domain = ".\Problems\Groupe3\maze.pddl"
-    problem = '.\Problems\Groupe3\problems\maze_p0.pddl'
-    graphplan(domain_file, problem_file)
+    domain_file = ".\Problems\Groupe3\maze.pddl"
+    problem_file = '.\Problems\Groupe3\problems\maze_p0.pddl'
+    
+    graph_plan_object = GraphPlan(domain_file, problem_file)
+    plan = graph_plan_object.graphplan(domain_file, problem_file)
+    
+    if plan is None:
+        print("No plan found.")
+    else:
+        print(plan)
