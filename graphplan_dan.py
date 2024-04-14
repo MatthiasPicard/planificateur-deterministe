@@ -243,63 +243,54 @@ class GraphPlan:
         if is_mutex(get_action_giving(literal1), get_action_giving(literal2)):
             self.mutex_literal(literal, literal)
 
-    def plan(self):
-            # Vérifier si le but est atteint dans le dernier état
+    def plan(self, current_level=None, goal=None):
+        if current_level is None:
             current_level = len(self.state_levels) - 1
-            current_state = self.state_levels[current_level]
-            if not (self.goal.pos <= current_state.pos and self.goal.neg <= current_state.neg):
-                # Si le but n'est pas atteint, générer le prochain niveau
+        if goal is None:
+            goal = self.goal
+        # Vérifier si le but est atteint dans le dernier état
+        current_state = self.state_levels[current_level]
+        if not (goal.pos <= current_state.pos and goal.neg <= current_state.neg):
+            self.create_next_layer()
+            return None  # Le plan n'est pas encore complet
+        plan = []
+        state_path = [current_state]
+        action_path = []
+        # Tant que nous ne sommes pas revenus à l'état initial
+        while current_level > 0:
+            current_actions = self.action_set_levels[current_level]
+            no_mutex_actions = set()
+            # Évaluer les mutex entre actions
+            for action in current_actions:
+                if not any(self.is_mutex_actions(action, other_action) for other_action in current_actions if action != other_action):
+                    no_mutex_actions.add(action)
+            if not no_mutex_actions:
                 self.create_next_layer()
-                return None  # Le plan n'est pas encore complet
+                return None
 
-            # Initialiser le chemin de plan avec les états et actions
-            plan = []
-            state_path = [current_state]
-            action_path = []
-
-            # Tant que nous ne sommes pas revenus à l'état initial
-            while current_level > 0:
-                # Vérifier les mutex de littéraux dans l'état actuel
-                mutex_found = False
-                for lit1 in current_state.pos:
-                    for lit2 in current_state.neg:
-                        if self.is_mutex_prop(lit1, lit2, current_level):
-                            mutex_found = True
-                            break
-                    if mutex_found:
+            # Vérifier les mutex de littéraux dans l'état actuel
+            mutex_found = False
+            for lit1 in current_state.pos:
+                for lit2 in current_state.neg:
+                    if self.mutex_literal(lit1, lit2, True, False):  # Suppose que cette méthode vérifie les mutex et retourne un booléen
+                        mutex_found = True
                         break
-
                 if mutex_found:
-                    # Si un mutex est trouvé, recréer la couche
-                    self.create_next_layer()
-                    return None  # Mutex trouvé, besoin de réviser
+                    break
 
-                # Aucun mutex entre les littéraux, vérifier les actions
-                current_actions = self.action_set_levels[current_level]
-                no_mutex_actions = set()
-                for action in current_actions:
-                    action_is_mutex = False
-                    for other_action in current_actions:
-                        if action != other_action and self.is_mutex_action(action, other_action, current_level):
-                            action_is_mutex = True
-                            break
-                    if not action_is_mutex:
-                        no_mutex_actions.add(action)
+            if mutex_found:
+                self.create_next_layer()
+                return None
 
-                if not no_mutex_actions:
-                    # Mutex trouvé parmi les actions, besoin de créer une nouvelle couche
-                    self.create_next_layer()
-                    return None
+            action_path.append(no_mutex_actions)
+            current_level -= 1
+            current_state = self.state_levels[current_level]
+            state_path.append(current_state)
 
-                # Aucun mutex, enregistrer les actions et passer à l'état précédent
-                action_path.append(no_mutex_actions)
-                current_level -= 1
-                current_state = self.state_levels[current_level]
-                state_path.append(current_state)
+        # Construire le plan en remontant
+        plan = list(zip(reversed(state_path), reversed(action_path)))
+        return plan 
 
-            # Retourner le plan à l'envers (puisque nous avons construit à partir du but)
-            plan = list(zip(reversed(state_path), reversed(action_path)))
-            return plan
     def graphplan(self,domain_file, problem_file):
         """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
         
