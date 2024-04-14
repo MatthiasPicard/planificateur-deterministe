@@ -136,43 +136,49 @@ class GraphPlan:
     # on regarde si elle est présente dans un mutex
     # on regarde si le littéral associé est dans les préconditions de l'autre action
 
-    def is_mutex_actions(self, action1, action2):
-        for literal in action1.pre_pos: # attention set
-            for t in self.literal_mutexes[-2]: # [(l2, l3)]
-                if literal == t[0][0] and True == t[0][1]: # (l2, l3)
-                    if t[1][0] 
-                        return True
-                    
+    def is_mutex_actions(self, action1, action2):                    
         for t in self.literal_mutexes[-2]:
             if t[0][0] in action1.pre_pos and t[0][1] == True:
                 if t[1][0] in action2.pre_pos and t[1][1] == True:
-                    
+                    return True
                 if t[1][0] in action2.pre_neg and t[1][1] == False:
-
+                    return True
             if t[0][0] in action1.pre_neg and t[0][1] == False:
                 if t[1][0] in action2.pre_pos and t[1][1] == True:
-
+                    return True
                 if t[1][0] in action2.pre_neg and t[1][1] == False:
-
+                    return True
             if t[0][0] in action2.pre_pos and t[0][1] == True:
                 if t[1][0] in action1.pre_pos and t[1][1] == True:
-
+                    return True
                 if t[1][0] in action1.pre_neg and t[1][1] == False:
-
+                    return True
             if t[0][0] in action2.pre_neg and t[0][1] == False:
                 if t[1][0] in action1.pre_pos and t[1][1] == True:
-
+                    return True
                 if t[1][0] in action1.pre_neg and t[1][1] == False:
-
+                    return True
             if t[1][0] in action1.pre_pos and t[1][1] == True:
-
+                if t[0][0] in action2.pre_pos and t[1][1] == True:
+                    return True
+                if t[0][0] in action2.pre_neg and t[1][1] == False:
+                    return True
             if t[1][0] in action1.pre_neg and t[1][1] == False:
-                
+                if t[0][0] in action2.pre_pos and t[1][1] == True:
+                    return True
+                if t[0][0] in action2.pre_neg and t[1][1] == False:
+                    return True
             if t[1][0] in action2.pre_pos and t[1][1] == True:
-                
+                if t[0][0] in action1.pre_pos and t[1][1] == True:
+                    return True
+                if t[0][0] in action1.pre_neg and t[1][1] == False:
+                    return True
             if t[1][0] in action2.pre_neg and t[1][1] == False:
-                
-        return None
+                if t[0][0] in action1.pre_pos and t[1][1] == True:
+                    return True
+                if t[0][0] in action1.pre_neg and t[1][1] == False:
+                    return True
+        return False
 
     def create_mutexes(self):
         action_set = self.action_set_levels[-1]
