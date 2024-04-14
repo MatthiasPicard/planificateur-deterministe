@@ -1,7 +1,6 @@
+import random
 import pddlpy
 import pddl
-import random
-
 
 # Termes utilisés (en se basant sur le cours)
 # Literal (proposition)
@@ -42,46 +41,52 @@ class Action:
         return self.pre_pos == other.pre_pos and self.pre_neg == other.pre_neg and self.eff_pos == other.eff_pos and self.eff_neg == other.eff_neg
 
 class GraphPlan:
-    
-    def __init__(self,domain_file, problem_file):
-        init, goal = self.get_init(problem_file)
-        self.goal = goal
-        self.action_layers = []
-        self.prop_layers = [init] # always longer than actions_layers
+    def __init__(self, domain_file, problem_file):
         self.dp = pddlpy.DomainProblem(domain_file,problem_file)
-        self.prop_mutexes = [[]]   # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
+        init, goal = self.get_init(problem_file)
+        self.state_levels = [init] # always longer than actions_levels
+        self.action_set_levels = []
+        self.goal = goal
+        self.literal_mutexes = [[]] # list of list of pairs of mutex propositions (a propostion mutex is of the form ((prop1,is_true),(prop2,is_true)), to keep track of the negations)
         self.action_mutexes = [[]] # list of list of pairs of mutex actions
-        """
+
+        '''
+        Schéma pour les ensembles de mutex
+
+        literal_mutexes
         [
             [(l1, l2)], # pour le level 1
             [(l1, l3)], # pour le level 2
             [(l2, l3)]
         ]
 
+        action_mutexes
         [
             [(a1, a3)],
             [(a4, a5), (a3, a5)]
         ]
-        """   
-                   
-    def create_next_layer(self):
-        next_state = State(set(), set())
-        next_action_set = set()
-        for op in self.dp.operators():
-            n_s, n_a = self.forward(self.dp.ground_operator(op), self.state_levels[-1])
-            next_state.pos.update(n_s.pos)
-            next_state.neg.update(n_s.neg)
-            next_action_set.update(n_a)
-        self.action_set_levels.append(next_action_set)
-        self.state_levels.append(next_state)
-        self.create_mutexes()
+        '''
+
+    def is_applicable(action, state):
+        a_pos = set_str(action.precondition_pos)
+        a_neg = set_str(action.precondition_neg)
+        if not a_pos <= state.pos:
+            return False
+        if a_neg <= state.neg:
+            return True
+        else:
+            if (a_neg - state.neg).isdisjoint(state.pos):
+                state.neg.update(a_neg) # On choisit d'update le state plutôt que le next_state, la maj effectuée est sur des prédicats déjà présents (puisque hypothèse du monde clos)
+                return True
+            else:
+                return False
 
     def forward(self, actions, state): # pour le backward faut garder une trace de quelles actions ont faites 
         next_action = set()
         effect_pos = set()
         effect_neg = set()
         for action in actions:
-            if is_applicable(action, state):
+            if self.is_applicable(action, state):
                 p_pos = set_str(action.precondition_pos)
                 p_neg = set_str(action.precondition_neg)
                 e_pos = set_str(action.effect_pos)
@@ -93,7 +98,31 @@ class GraphPlan:
         next_state.pos.update(effect_pos)
         next_state.neg.update(effect_neg)
         return next_state, next_action
+
+    def create_next_layer(self):
+        next_state = State(set(), set())
+        next_action_set = set()
+        for op in self.dp.operators():
+            n_s, n_a = self.forward(self.dp.ground_operator(op), self.state_levels[-1])
+            next_state.pos.update(n_s.pos)
+            next_state.neg.update(n_s.neg)
+            next_action_set.update(n_a)
+        self.action_set_levels.append(next_action_set)
+        self.state_levels.append(next_state)
+        self.create_mutexes()
     
+    def mutex_action(action1, action2):
+        self.action_mutexes[-1].append
+
+
+    def is_mutex_action(self,action1, action2,action_index):
+        set_actions = set([action1, action2])
+        return set_actions in [set(elem) for elem in self.action_mutexes[action_index]]
+    
+    def is_mutex_prop(self,prop1, prop2,prop_index):
+        set_props = set([prop1, prop2])
+        return set_props in [set(elem) for elem in self.prop_mutexes[prop_index]]
+
     def create_mutexes(self):
         action_set = self.action_set_levels[-1]
         state = self.state_levels[-1]
@@ -187,14 +216,6 @@ class GraphPlan:
             #current_state = best_action.apply(current_state)
 
         return plan
-                  
-    def is_mutex_action(self, action1, action2):
-        set_actions = set([action1, action2])
-        return set_actions in [set(elem) for elem in self.action_mutexes[action_index]]
-    
-    def is_mutex_prop(self,prop1, prop2,prop_index):
-        set_props = set([prop1, prop2])
-        return set_props in [set(elem) for elem in self.prop_mutexes[prop_index]]
     
     def graphplan(self,domain_file, problem_file):
         """Fonction qui englobe tout pour exécuter notre algorithme de graphplan"""
@@ -213,7 +234,6 @@ class GraphPlan:
         return None
     
     def get_init(self,problem_file):
-        
         init_neg_predicates = []
         init_pos_predicates = []
         problem = pddl.parse_problem(problem_file) # we need to use pddl to extract negations
@@ -242,28 +262,13 @@ class GraphPlan:
                 else:
                     raise ValueError("Unknown predicate type")
 
-        return State(set_str(init_pos_predicates), set_str(init_neg_predicates)),State(set_str(goal_pos_predicates), set_str(goal_neg_predicates))
+        return State(set_str(init_pos_predicates), set_str(init_neg_predicates)), State(set_str(goal_pos_predicates), set_str(goal_neg_predicates))
 
 def set_str(s: set):
     s_str = set()
     for i in s:
         s_str.add(str(i))
-    return s_str    
-
-def is_applicable(action, state):
-    a_pos = set_str(action.precondition_pos)
-    a_neg = set_str(action.precondition_neg)
-    if not a_pos <= state.pos:
-        return False
-    if a_neg <= state.neg:
-        return True
-    else:
-        if (a_neg - state.neg).isdisjoint(state.pos):
-            state.neg.update(a_neg) # On choisit d'update le state plutôt que le next_state, la maj effectuée est sur des prédicats déjà présents (puisque hypothèse du monde clos)
-            return True
-        else:
-            return False
-        
+    return s_str  
 
 if __name__ == "__main__":
     
