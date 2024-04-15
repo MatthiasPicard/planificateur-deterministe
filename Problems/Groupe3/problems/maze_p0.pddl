@@ -9,5 +9,5 @@
         (dec y4 y3) (dec y3 y2) (dec y2 y1)
         (at maxime x1 y1)
     )
-    (:goal (at maxime x4 y4))
+    (:goal (at maxime x1 y2))
 )
