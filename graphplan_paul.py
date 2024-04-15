@@ -1,4 +1,4 @@
-import random
+import sys
 import pddlpy
 import pddl
 
@@ -85,23 +85,18 @@ class GraphPlan:
         else:
             if (a_neg - state.neg).isdisjoint(state.pos):
                 state.neg.update(a_neg) # On choisit d'update le state plutôt que le next_state, la maj effectuée est sur des prédicats déjà présents (puisque hypothèse du monde clos)
+                print(state.neg)
                 return True
             else:
                 return False
 
     def forward(self, actions, state, name_action): # pour le backward faut garder une trace de quelles actions ont faites 
         next_action = set()
-
-        # Actions persistence
-        for literal in state.pos:
-            next_action.add(Action("Persitent_" + str(literal), frozenset(literal), frozenset(), frozenset(literal), frozenset()))
-        for literal in state.neg:
-            next_action.add(Action("Persitent_" + str(literal), frozenset(), frozenset(literal), frozenset(), frozenset(literal)))
-
         effect_pos = set()
         effect_neg = set()
         for action in actions:
             if self.is_applicable(action, state):
+                print(state.neg)
                 p_pos = set_str(action.precondition_pos)
                 p_neg = set_str(action.precondition_neg)
                 e_pos = set_str(action.effect_pos)
@@ -109,6 +104,16 @@ class GraphPlan:
                 next_action.add(Action(name_action, frozenset(p_pos), frozenset(p_neg), frozenset(e_pos), frozenset(e_neg)))
                 effect_pos.update(e_pos)
                 effect_neg.update(e_neg)
+
+        print(state.pos)
+        print(state.neg)
+        # Actions persistence
+        for literal in state.pos:
+            next_action.add(Action("Persitent_" + str(literal), frozenset({literal}), frozenset(), frozenset({literal}), frozenset()))
+        for literal in state.neg:
+            next_action.add(Action("Persitent_" + str(literal), frozenset(), frozenset({literal}), frozenset(), frozenset({literal})))
+
+        print(next_action)
 
         next_state = state.copy()
         next_state.pos.update(effect_pos)
@@ -194,18 +199,24 @@ class GraphPlan:
 
     def is_mutex_literal(self, actions1, actions2):
         list_bool = []
+        if actions1 == [] or actions2 == []:
+            return False
         for action1 in actions1:
             for action2 in actions2:
                 if not ((action1, action2) in self.action_mutexes[-1]):
-                    print((action1, action2))
+                    #print((action1, action2))
                     return False
         return True
 
-    def get_action(self, literal, index):
+    def get_action(self, literal, index, truth):
         list_actions = list()
-        for action in self.action_set_levels[index]:
-            if literal in action.eff_pos:
-                list_actions.append(action)
+        for action in self.action_set_levels[index]: # la création des actions persistentes est anormale
+            if truth:
+                if literal in action.eff_pos:
+                    list_actions.append(action)
+            else:
+                if literal in action.eff_neg:
+                    list_actions.append(action)
         return list_actions
 
     def create_mutexes(self):
@@ -264,7 +275,7 @@ class GraphPlan:
         dict_pos = dict()
         #dict_neg = dict()
         for literal in state.pos:
-            dict_pos[literal] = self.get_action(literal, -1)
+            dict_pos[literal] = self.get_action(literal, -1, True)
             if 'inc' in literal:
                 pass
                 #print(dict_pos[literal])
@@ -291,7 +302,7 @@ class GraphPlan:
                         self.mutex_literal(literal1, literal2, True, True)'''
 
     def in_state(self, index, goal):
-        print(goal)
+        #print(goal)
         #print(self.literal_mutexes[index - 1])
         if index == 0:
             return True
@@ -323,7 +334,11 @@ class GraphPlan:
         return False
 
     def in_action_set(self, index, goal, index_goal, action_goal):
-        actions = self.get_action((list(goal.pos)+list(goal.neg))[index_goal], index)
+        # le get_action peut chercher pour un goal négatif
+        if index_goal >= len(goal.pos): #négatif
+            actions = self.get_action(list(goal.neg)[index_goal - len(goal.pos)], index, False)
+        else:
+            actions = self.get_action(list(goal.pos)[index_goal], index, True)
         for action in actions:
             action_goal.append(action)
             if index_goal != 0:
@@ -439,8 +454,8 @@ def print_plan(plan):
 
 if __name__ == "__main__":
     
-    domain_file = ".\Problems\Groupe3\maze.pddl"
-    problem_file = '.\Problems\Groupe3\problems\maze_p0.pddl'
+    domain_file = ".\Problems\Groupe3\maze.pddl" #".\Problems\Groupe3\maze.pddl" #sys.argv[1]
+    problem_file = '.\Problems\Groupe3\problems\maze_p0.pddl' #'.\Problems\Groupe3\problems\maze_p0.pddl' #sys.argv[2]
     
     graph_plan_object = GraphPlan(domain_file, problem_file)
     plan = graph_plan_object.graphplan()
