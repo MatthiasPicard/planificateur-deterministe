@@ -1,6 +1,9 @@
 import sys
 import pddlpy
 import pddl
+import os
+import argparse
+import time
 
 # Termes utilisés (en se basant sur le cours)
 # Literal (proposition)
@@ -321,7 +324,7 @@ class GraphPlan:
                 if t[1][0] in goal.neg and t[1][1] == False:
                     print("ici4")
                     return False
-        print("ici")
+        # print("ici")
         return self.in_action_set(index - 1, goal, len(goal.pos) + len(goal.neg) - 1, list())
     
     def check_mutex_action(self, action_set, index):
@@ -329,7 +332,7 @@ class GraphPlan:
             for action2 in action_set:
                 if action1 != action2:
                     for t in self.action_mutexes[index]:
-                        if t == (action1, action2) or t == (action1, action2):
+                        if t == (action1, action2) or t == (action2, action1):
                             return True
         return False
 
@@ -381,11 +384,15 @@ class GraphPlan:
         return False
 
     def graphplan(self):
+        t0 = time.time()
         res = self.plan()
+        nb_layers = 1
         while(res == False):
             self.create_next_layer()
             res = self.plan()
-        return res
+            nb_layers += 2
+        dt = time.time() - t0
+        return res, dt, nb_layers
 
     '''
     def graphplan(self, domain_file, problem_file):
@@ -452,14 +459,25 @@ def print_plan(plan):
             print(str(action.pre_pos) + " | " + str(action.pre_neg))
             print()
 
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-pg', '--path_group', default='./planificateur-deterministe/Problems/Groupe3')
+parser.add_argument('-df', '--domain_file', default='maze.pddl')
+parser.add_argument('-pf', '--problem_file', default='problems/maze_p0.pddl')
+
+args = parser.parse_args()
+
 if __name__ == "__main__":
-    
-    domain_file = ".\Problems\Groupe3\maze.pddl" #".\Problems\Groupe3\maze.pddl" #sys.argv[1]
-    problem_file = '.\Problems\Groupe3\problems\maze_p0.pddl' #'.\Problems\Groupe3\problems\maze_p0.pddl' #sys.argv[2]
+    path_group = args.path_group
+    domain_file = os.path.join(path_group, args.domain_file)
+    problem_file = os.path.join(path_group, args.problem_file)
     
     graph_plan_object = GraphPlan(domain_file, problem_file)
-    plan = graph_plan_object.graphplan()
+    plan, dt, nb_layers = graph_plan_object.graphplan()
     
+    print(f"Algorithm executed in {round(dt, 2)} seconds")
+    print(f"Graph Plan created {nb_layers} layers before terminating")
+
     if plan is None:
         print("No plan found.")
     else:
